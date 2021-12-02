@@ -1,6 +1,8 @@
 # CCVaultCIP30Test (ccvault-cip-0030-test)
 
-This test app detects and tests Cardano wallets, that implement CIP-0030.
+This test app detects and tests Cardano wallets, that implement CIP-0030:
+
+https://github.com/cardano-foundation/CIPs/tree/master/CIP-0030
 
 ## Install the dependencies
 ```bash
