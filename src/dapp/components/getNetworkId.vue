@@ -121,7 +121,7 @@ export default defineComponent({
 
       } catch(e: any) {
 
-        addLogError(logId, 'getNetworkId: error: ' + e)
+        addLogError(logId, 'getNetworkId: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

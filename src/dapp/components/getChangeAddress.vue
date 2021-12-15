@@ -125,7 +125,7 @@ export default defineComponent({
 
       } catch(e: any) {
 
-        addLogError(logId, 'getChangeAddress: error: ' + e)
+        addLogError(logId, 'getChangeAddress: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

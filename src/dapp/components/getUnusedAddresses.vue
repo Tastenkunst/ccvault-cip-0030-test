@@ -127,7 +127,7 @@ export default defineComponent({
 
       } catch(e: any) {
 
-        addLogError(logId, 'getUnusedAddresses: error: ' + e)
+        addLogError(logId, 'getUnusedAddresses: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

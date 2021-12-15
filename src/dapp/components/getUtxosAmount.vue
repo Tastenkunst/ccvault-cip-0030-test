@@ -173,17 +173,17 @@ export default defineComponent({
 
           r                   = await returnsPromise(logId, 'getUtxos', props.getUtxos, [ 'ffffffffff', { page: 1, limit: 1 } ])
 
-          addLogError(logId, 'getUtxos: No error received ' + r)
+          addLogError(logId, 'getUtxos: No error received ' + JSON.stringify(r, null, 2))
           return setApiTestFailed('No error received.')
 
         } catch (e) {
 
-          addLogImportant(logId, '&bull; "getUtxos" returned error: ' + e)
+          addLogImportant(logId, '&bull; "getUtxos" returned error: ' + JSON.stringify(e, null, 2))
         }
 
       } catch(e: any) {
 
-        addLogError(logId, 'getUtxos: error: ' + e)
+        addLogError(logId, 'getUtxos: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

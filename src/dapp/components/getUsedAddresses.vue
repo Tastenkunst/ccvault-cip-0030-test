@@ -44,6 +44,8 @@ export default defineComponent({
 
   name:                       'checkGetUsedAddresses',
 
+  emits:                      [ 'onUsedAddress' ],
+
   props: {
 
     getUsedAddresses:         { type: Function, required: true },
@@ -55,7 +57,7 @@ export default defineComponent({
     ApiTestUi
   },
 
-  setup(props) {
+  setup(props, { emit }) {
 
     const {
 
@@ -125,7 +127,14 @@ export default defineComponent({
 
           addLogSucceeded(logId, '&bull; addr valid cbor')
 
-          logAddress(logId, decoded)
+          const bech32        = logAddress(logId, decoded)
+
+          console.log('bech32', bech32)
+
+          if(bech32) {
+
+            emit('onUsedAddress', { addr: bech32 })
+          }
         }
 
         if(ar.length > 1) {
@@ -148,13 +157,13 @@ export default defineComponent({
 
             addLogSucceeded(logId, '&bull; addr valid cbor')
 
-            logAddress(logId, decoded)
+            const bech32      = logAddress(logId, decoded)
           }
         }
 
       } catch(e: any) {
 
-        addLogError(logId, 'getUsedAddresses: error: ' + e)
+        addLogError(logId, 'getUsedAddresses: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

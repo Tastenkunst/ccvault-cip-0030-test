@@ -32,12 +32,12 @@ import {
   isString,
   returnsPromise,
 }                             from '../lib/utils'
+import { signTxLocally }      from '../lib/utilsCbor'
 
 import { addApiTest }         from '../lib/ApiTestSuite'
 
 import ApiTestUi              from './apiTestUi.vue'
 import CheckSubmitTx          from './submitTx.vue'
-import { signTxLocally } from "../lib/utilsCbor";
 
 export default defineComponent({
 
@@ -82,6 +82,10 @@ export default defineComponent({
 
     const showAllLogs         = ref(false)
 
+    const txBody              = ref<string | null>(null)
+    const witnesses           = ref<string | null>(null)
+    const serializedTx        = ref<string | null>(null)
+
     const filteredLogs        = computed(() => {
 
       return logs.filter(item => (item.level === LogLevel.error || item.level <= (showAllLogs.value ? LogLevel.error : LogLevel.important)))
@@ -90,6 +94,10 @@ export default defineComponent({
     function resetStatus() {
 
       clearLog(logId)
+
+      txBody.value            = null
+      witnesses.value         = null
+      serializedTx.value      = null
 
       setApiTestStatus(apiTest, ApiTestStatus.idle)
     }
@@ -104,17 +112,9 @@ export default defineComponent({
       setApiTestStatus(apiTest, ApiTestStatus.failed)
     }
 
-    const txBody              = ref<string | null>(null)
-    const witnesses           = ref<string | null>(null)
-    const serializedTx        = ref<string | null>(null)
-
     async function performCheck() {
 
       resetStatus()
-
-      txBody.value            = null
-      witnesses.value         = null
-      serializedTx.value      = null
 
       setApiTestStatus(apiTest, ApiTestStatus.running)
 
@@ -143,7 +143,7 @@ export default defineComponent({
       } catch(e: any) {
 
         serializedTx.value    = null
-        addLogError(logId, 'signTx: error: ' + e)
+        addLogError(logId, 'signTx: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

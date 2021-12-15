@@ -228,7 +228,7 @@ export const logMultiAsset    = (logId: string, value: CSL.Value) => {
     addLogError(logId, '&nbsp;&nbsp;&bull; could not parse multi assets')
   }
 }
-export const logAddress       = (logId: string, address: CSL.Address) => {
+export const logAddress       = (logId: string, address: CSL.Address): string | null => {
 
   try {
 
@@ -236,10 +236,14 @@ export const logAddress       = (logId: string, address: CSL.Address) => {
 
     addLogImportant(logId, '<b><i>'+bech32+'</i></b>')
 
+    return bech32
+
   } catch (e) {
 
     addLogError(logId, '&nbsp;&nbsp;&bull; could not parse address')
   }
+
+  return null
 }
 export const logUtxo          = (logId: string, utxo: CSL.TransactionUnspentOutput) => {
 

@@ -1,6 +1,6 @@
 {
   "name": "ccvault-cip-0030-test",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "This test app detects and tests Cardano wallets, that implement CIP-0030. ",
   "productName": "CCVaultCIP30Test",
   "author": "Marcel Baumberg <info@tastenkunst.io>",
@@ -11,13 +11,13 @@
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
-    "@quasar/extras": "^1.12.1",
-    "core-js": "^3.19.2",
-    "quasar": "^2.3.3"
+    "@quasar/extras": "^1.12.2",
+    "core-js": "^3.19.3",
+    "quasar": "^2.3.4"
   },
   "devDependencies": {
-    "@quasar/app": "^3.2.4",
-    "@types/node": "^16.11.11",
+    "@quasar/app": "^3.2.5",
+    "@types/node": "^16.11.13",
     "tailwindcss": "^2.2.19"
   },
   "browserslist": [

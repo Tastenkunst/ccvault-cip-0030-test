@@ -6,11 +6,18 @@
   <check-get-balance          log-id-suffix="legacy"  :get-balance          ="getBalanceFunction"         v-if="getBalanceFunction"/>
   <check-get-utxos            log-id-suffix="legacy"  :get-utxos            ="getUtxosFunction"           v-if="getUtxosFunction"/>
 
-  <check-get-used-addresses   log-id-suffix="legacy"  :get-used-addresses   ="getUsedAddressesFunction"   v-if="getUsedAddressesFunction"/>
+  <check-get-used-addresses   log-id-suffix="legacy"  :get-used-addresses   ="getUsedAddressesFunction"   v-if="getUsedAddressesFunction"
+                                                      @onUsedAddress        ="onUsedAddress"/>
   <check-get-unused-addresses log-id-suffix="legacy"  :get-unused-addresses ="getUnusedAddressesFunction" v-if="getUnusedAddressesFunction"/>
   <!-- single address -->
   <check-get-reward-address   log-id-suffix="legacy"  :get-reward-address   ="getRewardAddressFunction"   v-if="getRewardAddressFunction"/>
   <check-get-change-address   log-id-suffix="legacy"  :get-change-address   ="getChangeAddressFunction"   v-if="getChangeAddressFunction"/>
+
+  <check-sign-data            log-id-suffix="legacy"  :sign-data            ="signDataFunction"           v-if="signDataFunction && signDataAddress"
+                                                      :addr                 ="signDataAddress"/>
+
+  <check-sign-tx              log-id-suffix="legacy"  :sign-tx              ="signTxFunction"             v-if="signTxFunction && submitTxFunction"
+                                                      :submit-tx            ="submitTxFunction"/>
 
 </template>
 
@@ -21,37 +28,39 @@ import {
   defineComponent,
   reactive,
   ref
-}                             from 'vue'
+}                               from 'vue'
 
 import {
   LogLevel,
   useApiLog
-}                             from '../useApiLog'
+}                               from '../useApiLog'
 
 import {
   ApiTest,
   ApiTestStatus,
   createApiTest,
   setApiTestStatus
-}                             from '../lib/ApiTest'
+}                               from '../lib/ApiTest'
 
 import {
   isBoolean,
   isObject
-}                             from '../lib/utils'
+}                               from '../lib/utils'
 
-import { addApiTest }         from '../lib/ApiTestSuite'
+import { addApiTest }           from '../lib/ApiTestSuite'
 
-import CheckGetNetworkId      from './getNetworkId.vue'
-import CheckGetBalance        from './getBalance.vue'
-import CheckGetUtxos          from './getUtxos.vue'
+import CheckGetNetworkId        from './getNetworkId.vue'
+import CheckGetBalance          from './getBalance.vue'
+import CheckGetUtxos            from './getUtxos.vue'
 
-import CheckGetUsedAddresses  from './getUsedAddresses.vue'
-import CheckGetUnusedAddresses from './getUnusedAddresses.vue'
-import CheckGetRewardAddress  from './getRewardAddress.vue'
-import CheckGetChangeAddress  from './getChangeAddress.vue'
+import CheckGetUsedAddresses    from './getUsedAddresses.vue'
+import CheckGetUnusedAddresses  from './getUnusedAddresses.vue'
+import CheckGetRewardAddress    from './getRewardAddress.vue'
+import CheckGetChangeAddress    from './getChangeAddress.vue'
+import CheckSignData            from './signData.vue'
+import CheckSignTx              from './signTx.vue'
 
-import ApiTestUi              from './apiTestUi.vue'
+import ApiTestUi                from './apiTestUi.vue'
 
 export default defineComponent({
 
@@ -67,8 +76,16 @@ export default defineComponent({
     CheckGetUsedAddresses,
     CheckGetUnusedAddresses,
     CheckGetRewardAddress,
-    CheckGetChangeAddress
+    CheckGetChangeAddress,
+
+    CheckSignData,
+    CheckSignTx
   },
+
+
+
+
+
 
   setup() {
 
@@ -80,9 +97,9 @@ export default defineComponent({
       addLogImportant,
       addLogSucceeded,
       addLogError
-    }                         = useApiLog()
+    }                               = useApiLog()
 
-    const apiTest: ApiTest    = reactive<ApiTest>(
+    const apiTest: ApiTest          = reactive<ApiTest>(
       createApiTest(
         'Full API: Legacy',
         'enable()',
@@ -92,10 +109,10 @@ export default defineComponent({
       )
     )
 
-    const logId               = apiTest.label
-    const logs                = getLog(logId)
+    const logId                     = apiTest.label
+    const logs                      = getLog(logId)
 
-    const showAllLogs         = ref(false)
+    const showAllLogs               = ref(false)
 
     const getNetworkIdFunction      = ref<any>(null)
     const getBalanceFunction        = ref<any>(null)
@@ -105,6 +122,10 @@ export default defineComponent({
     const getUnusedAddressesFunction= ref<any>(null)
     const getRewardAddressFunction  = ref<any>(null) // Legacy: single address
     const getChangeAddressFunction  = ref<any>(null)
+    const signDataFunction          = ref<any>(null)
+    const signDataAddress           = ref<string | null>(null)
+    const signTxFunction            = ref<any>(null)
+    const submitTxFunction          = ref<any>(null)
 
     const filteredLogs        = computed(() => {
 
@@ -123,6 +144,10 @@ export default defineComponent({
       getUnusedAddressesFunction.value  = null
       getRewardAddressFunction.value    = null
       getChangeAddressFunction.value    = null
+
+      signDataFunction.value            = null
+      signTxFunction.value              = null
+      submitTxFunction.value            = null
 
       setApiTestStatus(apiTest, ApiTestStatus.idle)
     }
@@ -148,7 +173,7 @@ export default defineComponent({
 
       let r: any
 
-      try{
+      try {
 
         r                     = await cardano.isEnabled()
 
@@ -158,12 +183,12 @@ export default defineComponent({
 
       } catch (e) {
 
-        addLogError(logId, 'isEnabled: error: ' + e)
+        addLogError(logId, 'isEnabled: error: ' + JSON.stringify(e, null, 2))
       }
 
       try {
 
-        r                     = await cardano.enable()
+        r                                 = await cardano.enable()
 
         if(!isObject(r) && !isBoolean(r)) { return addLogError(logId, 'enable: return type not object or boolean') }
 
@@ -171,17 +196,21 @@ export default defineComponent({
 
       } catch (e) {
 
-        addLogError(logId, 'enable: error: ' + e)
+        addLogError(logId, 'enable: error: ' + JSON.stringify(e, null, 2))
       }
 
-      getNetworkIdFunction.value      = cardano.getNetworkId
-      getBalanceFunction.value        = cardano.getBalance
-      getUtxosFunction.value          = cardano.getUtxos
+      getNetworkIdFunction.value          = cardano.getNetworkId
+      getBalanceFunction.value            = cardano.getBalance
+      getUtxosFunction.value              = cardano.getUtxos
 
-      getUsedAddressesFunction.value  = cardano.getUsedAddresses
-      getUnusedAddressesFunction.value= cardano.getUnusedAddresses
-      getRewardAddressFunction.value  = cardano.getRewardAddress
-      getChangeAddressFunction.value  = cardano.getChangeAddress
+      getUsedAddressesFunction.value      = cardano.getUsedAddresses
+      getUnusedAddressesFunction.value    = cardano.getUnusedAddresses
+      getRewardAddressFunction.value      = cardano.getRewardAddress
+      getChangeAddressFunction.value      = cardano.getChangeAddress
+
+      signDataFunction.value              = cardano.signData
+      signTxFunction.value                = cardano.signTx
+      submitTxFunction.value              = cardano.submitTx
 
       addLogImportant(logId, '<b><i>Legacy API ready to check.</i></b>')
 
@@ -189,6 +218,13 @@ export default defineComponent({
     }
 
     performCheck()
+
+    function onUsedAddress(payload: { addr: string | null }) {
+
+      console.log('onUsedAddress:', payload.addr)
+
+      signDataAddress.value = payload.addr
+    }
 
     return {
 
@@ -202,10 +238,13 @@ export default defineComponent({
       getBalanceFunction,
       getUtxosFunction,
 
-      getUsedAddressesFunction,
+      getUsedAddressesFunction, onUsedAddress,
       getUnusedAddressesFunction,
       getRewardAddressFunction,
-      getChangeAddressFunction
+      getChangeAddressFunction,
+
+      signDataFunction, signDataAddress,
+      signTxFunction, submitTxFunction
     }
   }
 })

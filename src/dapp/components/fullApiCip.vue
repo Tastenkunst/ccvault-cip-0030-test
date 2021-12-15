@@ -6,11 +6,15 @@
   <check-get-balance          log-id-suffix="CIP"     :get-balance          ="getBalanceFunction"         v-if="getBalanceFunction"/>
   <check-get-utxos            log-id-suffix="CIP"     :get-utxos            ="getUtxosFunction"           v-if="getUtxosFunction"/>
 
-  <check-get-used-addresses   log-id-suffix="CIP"     :get-used-addresses   ="getUsedAddressesFunction"   v-if="getUsedAddressesFunction"/>
+  <check-get-used-addresses   log-id-suffix="CIP"     :get-used-addresses   ="getUsedAddressesFunction"   v-if="getUsedAddressesFunction"
+                                                      @onUsedAddress        ="onUsedAddress"/>
   <check-get-unused-addresses log-id-suffix="CIP"     :get-unused-addresses ="getUnusedAddressesFunction" v-if="getUnusedAddressesFunction"/>
   <!-- array of addresses -->
   <check-get-reward-addresses log-id-suffix="CIP"     :get-reward-addresses ="getRewardAddressesFunction" v-if="getRewardAddressesFunction"/>
   <check-get-change-address   log-id-suffix="CIP"     :get-change-address   ="getChangeAddressFunction"   v-if="getChangeAddressFunction"/>
+
+  <check-sign-data            log-id-suffix="CIP"     :sign-data            ="signDataFunction"           v-if="signDataFunction && signDataAddress"
+                                                      :addr                 ="signDataAddress"/>
 
   <check-sign-tx              log-id-suffix="CIP"     :sign-tx              ="signTxFunction"             v-if="signTxFunction && submitTxFunction"
                                                       :submit-tx            ="submitTxFunction"/>
@@ -24,38 +28,39 @@ import {
   defineComponent,
   reactive,
   ref
-}                             from 'vue'
+}                               from 'vue'
 
 import {
   LogLevel,
   useApiLog
-}                             from '../useApiLog'
+}                               from '../useApiLog'
 
 import {
   ApiTest,
   ApiTestStatus,
   createApiTest,
   setApiTestStatus
-}                             from '../lib/ApiTest'
+}                               from '../lib/ApiTest'
 
 import {
   isBoolean,
   isObject
-}                             from '../lib/utils'
+}                               from '../lib/utils'
 
-import { addApiTest }         from '../lib/ApiTestSuite'
+import { addApiTest }           from '../lib/ApiTestSuite'
 
-import CheckGetNetworkId      from './getNetworkId.vue'
-import CheckGetBalance        from './getBalance.vue'
-import CheckGetUtxos          from './getUtxos.vue'
+import CheckGetNetworkId        from './getNetworkId.vue'
+import CheckGetBalance          from './getBalance.vue'
+import CheckGetUtxos            from './getUtxos.vue'
 
-import CheckGetUsedAddresses  from './getUsedAddresses.vue'
-import CheckGetUnusedAddresses from './getUnusedAddresses.vue'
-import CheckGetRewardAddresses from './getRewardAddresses.vue'
-import CheckGetChangeAddress  from './getChangeAddress.vue'
-import CheckSignTx            from './signTx.vue'
+import CheckGetUsedAddresses    from './getUsedAddresses.vue'
+import CheckGetUnusedAddresses  from './getUnusedAddresses.vue'
+import CheckGetRewardAddresses  from './getRewardAddresses.vue'
+import CheckGetChangeAddress    from './getChangeAddress.vue'
+import CheckSignData            from './signData.vue'
+import CheckSignTx              from './signTx.vue'
 
-import ApiTestUi              from './apiTestUi.vue'
+import ApiTestUi                from './apiTestUi.vue'
 
 export default defineComponent({
 
@@ -73,6 +78,7 @@ export default defineComponent({
     CheckGetRewardAddresses,
     CheckGetChangeAddress,
 
+    CheckSignData,
     CheckSignTx
   },
 
@@ -91,9 +97,9 @@ export default defineComponent({
       addLogImportant,
       addLogSucceeded,
       addLogError
-    }                         = useApiLog()
+    }                               = useApiLog()
 
-    const apiTest: ApiTest    = reactive<ApiTest>(
+    const apiTest: ApiTest          = reactive<ApiTest>(
       createApiTest(
         'Full API: CIP',
         'enable()',
@@ -103,10 +109,10 @@ export default defineComponent({
       )
     )
 
-    const logId               = apiTest.label
-    const logs                = getLog(logId)
+    const logId                     = apiTest.label
+    const logs                      = getLog(logId)
 
-    const showAllLogs         = ref(false)
+    const showAllLogs               = ref(false)
 
     const getNetworkIdFunction      = ref<any>(null)
     const getBalanceFunction        = ref<any>(null)
@@ -116,6 +122,8 @@ export default defineComponent({
     const getUnusedAddressesFunction= ref<any>(null)
     const getRewardAddressesFunction= ref<any>(null)
     const getChangeAddressFunction  = ref<any>(null)
+    const signDataFunction          = ref<any>(null)
+    const signDataAddress           = ref<string | null>(null)
     const signTxFunction            = ref<any>(null)
     const submitTxFunction          = ref<any>(null)
 
@@ -137,6 +145,7 @@ export default defineComponent({
       getRewardAddressesFunction.value  = null
       getChangeAddressFunction.value    = null
 
+      signDataFunction.value            = null
       signTxFunction.value              = null
       submitTxFunction.value            = null
 
@@ -184,7 +193,7 @@ export default defineComponent({
 
       } catch (e) {
 
-        addLogError(logId, 'isEnabled: error: ' + e)
+        addLogError(logId, 'isEnabled: error: ' + JSON.stringify(e, null, 2))
       }
 
       try {
@@ -203,6 +212,8 @@ export default defineComponent({
         getUnusedAddressesFunction.value  = apiObj.getUnusedAddresses
         getRewardAddressesFunction.value  = apiObj.getRewardAddresses
         getChangeAddressFunction.value    = apiObj.getChangeAddress
+
+        signDataFunction.value            = apiObj.signData
         signTxFunction.value              = apiObj.signTx
         submitTxFunction.value            = apiObj.submitTx
 
@@ -218,6 +229,13 @@ export default defineComponent({
 
     performCheck()
 
+    function onUsedAddress(payload: { addr: string | null }) {
+
+      console.log('onUsedAddress:', payload.addr)
+
+      signDataAddress.value = payload.addr
+    }
+
     return {
 
       logs: filteredLogs,
@@ -230,13 +248,13 @@ export default defineComponent({
       getBalanceFunction,
       getUtxosFunction,
 
-      getUsedAddressesFunction,
+      getUsedAddressesFunction, onUsedAddress,
       getUnusedAddressesFunction,
       getRewardAddressesFunction,
       getChangeAddressFunction,
 
-      signTxFunction,
-      submitTxFunction
+      signDataFunction, signDataAddress,
+      signTxFunction, submitTxFunction
     }
   }
 })

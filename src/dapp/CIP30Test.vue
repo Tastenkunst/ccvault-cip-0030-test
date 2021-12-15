@@ -1,7 +1,7 @@
 <template>
 
   <div class="p-2 bg-blue-700 text-white font-mono font-black flex flex-row flex-nowrap justify-between">
-    <span><a href="https://ccvault.io" target="_blank">ccvault.io</a> - dapp-connector test page - v1.0.0</span>
+    <span><a href="https://ccvault.io" target="_blank">ccvault.io</a> - dapp-connector test page - v1.1.0</span>
   </div>
 
   <div class="grid grid-cols-12 gap-2 p-2">

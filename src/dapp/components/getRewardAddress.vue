@@ -124,7 +124,7 @@ export default defineComponent({
 
       } catch(e: any) {
 
-        addLogError(logId, 'getRewardAddress: error: ' + e)
+        addLogError(logId, 'getRewardAddress: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

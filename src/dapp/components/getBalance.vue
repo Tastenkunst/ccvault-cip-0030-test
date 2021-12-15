@@ -126,7 +126,7 @@ export default defineComponent({
 
       } catch(e: any) {
 
-        addLogError(logId, 'getBalance: error: ' + e)
+        addLogError(logId, 'getBalance: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 

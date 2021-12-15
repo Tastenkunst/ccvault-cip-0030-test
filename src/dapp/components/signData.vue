@@ -2,8 +2,6 @@
 
   <api-test-ui :api-test="apiTest" :perform-check="performCheck"/>
 
-  <check-get-utxos-amount :log-id-suffix="logIdSuffix" :get-utxos="getUtxos" :utxo-amount="utxoAmount" v-if="getUtxos && utxoAmount && logIdSuffix==='CIP'"/>
-
 </template>
 
 <script lang="ts">
@@ -29,35 +27,29 @@ import {
 }                             from '../lib/ApiTest'
 
 import {
-  isArray,
+  isObject,
+  isString,
   returnsPromise,
 }                             from '../lib/utils'
 
 import { addApiTest }         from '../lib/ApiTestSuite'
 
-import {
-  decodeCborUtxo,
-  logUtxo,
-  toHexString
-}                             from '../lib/utilsCbor'
-
 import ApiTestUi              from './apiTestUi.vue'
-import CheckGetUtxosAmount    from './getUtxosAmount.vue'
 
 export default defineComponent({
 
-  name:                       'checkGetUtxos',
+  name:                       'checkSignData',
 
   props: {
 
-    getUtxos:                 { type: Function, required: true },
-    logIdSuffix:              { type: String, required: true }
+    signData:                 { type: Function, required: true },
+    addr:                     { type: String,   required: true },
+    logIdSuffix:              { type: String,   required: true }
   },
 
   components: {
 
-    ApiTestUi,
-    CheckGetUtxosAmount
+    ApiTestUi
   },
 
   setup(props) {
@@ -73,10 +65,10 @@ export default defineComponent({
 
     const apiTest: ApiTest    = reactive<ApiTest>(
       createApiTest(
-        'getUtxos',
+        'signData',
         'Check',
         [
-          '- check getUtxos function return types and cbor'
+          '- check signData popup'
         ]
       )
     )
@@ -86,6 +78,8 @@ export default defineComponent({
 
     const showAllLogs         = ref(false)
 
+    const signedData          = ref<string | null>(null)
+
     const filteredLogs        = computed(() => {
 
       return logs.filter(item => (item.level === LogLevel.error || item.level <= (showAllLogs.value ? LogLevel.error : LogLevel.important)))
@@ -94,6 +88,8 @@ export default defineComponent({
     function resetStatus() {
 
       clearLog(logId)
+
+      signedData.value        = null
 
       setApiTestStatus(apiTest, ApiTestStatus.idle)
     }
@@ -108,8 +104,6 @@ export default defineComponent({
       setApiTestStatus(apiTest, ApiTestStatus.failed)
     }
 
-    const utxoAmount          = ref<string | null>(null)
-
     async function performCheck() {
 
       resetStatus()
@@ -118,38 +112,27 @@ export default defineComponent({
 
       try {
 
-        let r: any            = await returnsPromise(logId, 'getUtxos', props.getUtxos)
+        let r: string         = await returnsPromise(logId, 'signData', props.signData, [ props.addr, 'ffffffff' ])
 
-        if(!isArray(r))       { return setApiTestFailed('getUtxos: return type not array') }
+        if(!isString(r))      { return setApiTestFailed('signData: return type not string') }
 
-        addLogSucceeded(logId, '&bull; "getUtxos" returned: ' + r)
+        addLogSucceeded(logId, '&bull; "signData" signedData: ' + r)
 
-        for(const utxo of r)  {
+        signedData.value      = r
 
-          const decoded       = decodeCborUtxo(utxo)
-
-          addLogSucceeded(logId, '&bull; utxo valid cbor')
-
-          logUtxo(logId, decoded)
-          addLogImportant(logId, ' ')
-
-          if(utxoAmount.value === null) {
-
-            utxoAmount.value  = decoded.output().amount().coin().to_str()
-            utxoAmount.value  = toHexString(decoded.output().amount().to_bytes())
-          }
-        }
+        addLogImportant(logId, r)
 
       } catch(e: any) {
 
-        addLogError(logId, 'getUtxos: error: ' + JSON.stringify(e, null, 2))
+        signedData.value      = null
+        addLogError(logId, 'signData: error: ' + JSON.stringify(e, null, 2))
         return setApiTestFailed(e.message)
       }
 
       setApiTestStatus(apiTest, ApiTestStatus.succeeded)
     }
 
-    performCheck()
+    // performCheck()
 
     return {
 
@@ -159,7 +142,9 @@ export default defineComponent({
       apiTest,
       performCheck,
 
-      utxoAmount
+      // txBody,
+      // witnesses,
+      // serializedTx
     }
   }
 })
